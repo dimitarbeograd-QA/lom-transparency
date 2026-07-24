@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Наредби и нормативни актове — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    /* Page-specific layout for the ordinances list -- common.css is shared
+       across all modules and intentionally left untouched. */
+    .filter-form {
+      max-width: none;
+    }
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .filter-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+    .filter-actions button {
+      width: auto;
+    }
+    #ordinances-list {
+      display: grid;
+      gap: 1rem;
+    }
+    a.ordinance-card {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+    a.ordinance-card:hover {
+      border-color: var(--color-primary);
+      text-decoration: none;
+    }
+    .ordinance-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Наредби и нормативни актове</h1>
+      <p class="lead">
+        Действащи и отменени наредби на Общински съвет &ndash; Лом.
+      </p>
+    </div>
+
+    <div class="card">
+      <form id="filter-form" class="filter-form">
+        <div class="filter-row">
+          <div>
+            <label for="filter-status">Статус</label>
+            <select id="filter-status" name="status">
+              <option value="">Всички</option>
+              <option value="active">Действаща</option>
+              <option value="repealed">Отменена</option>
+            </select>
+          </div>
+          <div>
+            <label for="filter-category">Категория</label>
+            <input type="text" id="filter-category" name="category" placeholder="напр. Данъци" />
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button type="submit">Филтриране</button>
+          <button type="button" id="filter-reset" class="btn-secondary">Изчистване</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="ordinances-list">
+      <p class="empty-state">Зареждане...</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    &copy; 2026 Община Лом &mdash; Портал за прозрачност
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script src="/ordinances/ordinances.js"></script>
+  <script>
+    renderNav('ordinances');
+    initOrdinancesListPage();
+  </script>
+</body>
+</html>

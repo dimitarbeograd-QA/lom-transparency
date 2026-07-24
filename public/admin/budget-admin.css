@@ -1,0 +1,92 @@
+/* Community Лом -- Admin: Бюджет module page-specific styles. */
+
+.hidden {
+  display: none !important;
+}
+
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-heading-row h2,
+.section-heading-row h3 {
+  margin: 0;
+}
+
+.wide-form {
+  max-width: 560px;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  max-width: none;
+  background: #f7f8f6;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.inline-form > div {
+  min-width: 150px;
+  flex: 1 1 150px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.row-actions button,
+.row-actions .btn {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.btn-approve {
+  background: #166534;
+}
+
+.btn-approve:hover {
+  background: #14532d;
+}
+
+.btn-reject {
+  background: #991b1b;
+}
+
+.btn-reject:hover {
+  background: #7f1d1d;
+}
+
+.attachment-admin-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.attachment-admin-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.attachment-admin-list li:last-child {
+  border-bottom: none;
+}

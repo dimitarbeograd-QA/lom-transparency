@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Администрация — Администрация — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    /* Page-specific layout -- common.css / admin-common.js are shared and
+       intentionally left untouched. */
+    .entity-tabs {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .entity-tabs button {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+    }
+    .entity-tabs button.active {
+      background: var(--color-primary);
+      color: var(--color-primary-contrast);
+      border-color: var(--color-primary);
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .status-tabs {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .status-tabs button {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+      font-size: 0.85rem;
+      padding: 0.35rem 0.6rem;
+    }
+    .status-tabs button.active {
+      background: var(--color-primary);
+      color: var(--color-primary-contrast);
+      border-color: var(--color-primary);
+    }
+    table td, table th {
+      vertical-align: top;
+    }
+    .row-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .row-actions button {
+      padding: 0.35rem 0.6rem;
+      font-size: 0.85rem;
+    }
+    .btn-approve {
+      background: #166534;
+    }
+    .btn-approve:hover {
+      background: #14532d;
+    }
+    .btn-reject {
+      background: #991b1b;
+    }
+    .btn-reject:hover {
+      background: #7f1d1d;
+    }
+    .entity-panel {
+      display: none;
+    }
+    .entity-panel.active {
+      display: block;
+    }
+    .form-panel {
+      display: none;
+    }
+    .form-panel.open {
+      display: block;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .inline-form-wide {
+      max-width: none;
+    }
+    .form-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .form-actions button {
+      width: auto;
+    }
+    .committee-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+    .committee-chip-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.78rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      background: var(--color-badge-approved-bg);
+      color: var(--color-badge-approved-text);
+    }
+    .committee-chip-sm.chair {
+      background: var(--color-badge-pending-bg);
+      color: var(--color-badge-pending-text);
+      font-weight: 600;
+    }
+    .committee-chip-sm button {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      padding: 0;
+      font-weight: 700;
+      width: auto;
+    }
+    #membership-panel {
+      display: none;
+    }
+    #membership-panel.open {
+      display: block;
+    }
+    .membership-add-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: end;
+      margin-top: 0.75rem;
+    }
+    .membership-add-row > div {
+      flex: 1 1 160px;
+    }
+    .membership-add-row button {
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="admin-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Общинска администрация</h1>
+      <p class="lead">
+        Управление на отдели, служители, общински съветници и комисии, и
+        одобряване на записи от автоматичното синхронизиране.
+      </p>
+    </div>
+
+    <div class="entity-tabs" id="entity-tabs">
+      <button type="button" data-entity="departments" class="active">Отдели</button>
+      <button type="button" data-entity="officials">Служители</button>
+      <button type="button" data-entity="council-members">Общински съветници</button>
+      <button type="button" data-entity="committees">Комисии</button>
+    </div>
+
+    <!-- ===================== DEPARTMENTS ===================== -->
+    <div class="entity-panel active" id="panel-departments">
+      <div class="toolbar">
+        <div class="status-tabs" data-scope="departments">
+          <button type="button" data-status="pending" class="active">Чакащи преглед</button>
+          <button type="button" data-status="approved">Одобрени</button>
+          <button type="button" data-status="rejected">Отхвърлени</button>
+          <button type="button" data-status="all">Всички</button>
+        </div>
+        <button type="button" id="new-department-btn">+ Нов отдел</button>
+      </div>
+
+      <div class="card form-panel" id="department-form-panel">
+        <h2 id="department-form-title">Нов отдел</h2>
+        <div id="department-form-error" class="form-error" role="alert"></div>
+        <form id="department-form" class="inline-form-wide">
+          <input type="hidden" id="department-id" />
+          <div class="form-row">
+            <div>
+              <label for="department-name">Наименование *</label>
+              <input type="text" id="department-name" required />
+            </div>
+          </div>
+          <div>
+            <label for="department-description">Описание</label>
+            <textarea id="department-description" rows="3"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Запазване</button>
+            <button type="button" id="department-form-cancel" class="btn-secondary">Отказ</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Статус</th>
+                <th>Наименование</th>
+                <th>Описание</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="departments-tbody">
+              <tr><td colspan="4" class="empty-state">Зареждане...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== OFFICIALS ===================== -->
+    <div class="entity-panel" id="panel-officials">
+      <div class="toolbar">
+        <div class="status-tabs" data-scope="officials">
+          <button type="button" data-status="pending" class="active">Чакащи преглед</button>
+          <button type="button" data-status="approved">Одобрени</button>
+          <button type="button" data-status="rejected">Отхвърлени</button>
+          <button type="button" data-status="all">Всички</button>
+        </div>
+        <button type="button" id="new-official-btn">+ Нов служител</button>
+      </div>
+
+      <div class="card form-panel" id="official-form-panel">
+        <h2 id="official-form-title">Нов служител</h2>
+        <div id="official-form-error" class="form-error" role="alert"></div>
+        <form id="official-form" class="inline-form-wide">
+          <input type="hidden" id="official-id" />
+          <div class="form-row">
+            <div>
+              <label for="official-name">Име *</label>
+              <input type="text" id="official-name" required />
+            </div>
+            <div>
+              <label for="official-position">Длъжност</label>
+              <input type="text" id="official-position" />
+            </div>
+            <div>
+              <label for="official-department">Отдел</label>
+              <select id="official-department">
+                <option value="">— без отдел —</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label for="official-email">Имейл</label>
+              <input type="email" id="official-email" />
+            </div>
+            <div>
+              <label for="official-phone">Телефон</label>
+              <input type="text" id="official-phone" />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Запазване</button>
+            <button type="button" id="official-form-cancel" class="btn-secondary">Отказ</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Статус</th>
+                <th>Име</th>
+                <th>Длъжност</th>
+                <th>Отдел</th>
+                <th>Контакти</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="officials-tbody">
+              <tr><td colspan="6" class="empty-state">Зареждане...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== COUNCIL MEMBERS ===================== -->
+    <div class="entity-panel" id="panel-council-members">
+      <div class="toolbar">
+        <div class="status-tabs" data-scope="council-members">
+          <button type="button" data-status="pending" class="active">Чакащи преглед</button>
+          <button type="button" data-status="approved">Одобрени</button>
+          <button type="button" data-status="rejected">Отхвърлени</button>
+          <button type="button" data-status="all">Всички</button>
+        </div>
+        <button type="button" id="new-council-member-btn">+ Нов съветник</button>
+      </div>
+
+      <div class="card form-panel" id="council-member-form-panel">
+        <h2 id="council-member-form-title">Нов съветник</h2>
+        <div id="council-member-form-error" class="form-error" role="alert"></div>
+        <form id="council-member-form" class="inline-form-wide">
+          <input type="hidden" id="council-member-id" />
+          <div class="form-row">
+            <div>
+              <label for="council-member-name">Име *</label>
+              <input type="text" id="council-member-name" required />
+            </div>
+            <div>
+              <label for="council-member-party">Партия / коалиция</label>
+              <input type="text" id="council-member-party" />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Запазване</button>
+            <button type="button" id="council-member-form-cancel" class="btn-secondary">Отказ</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card form-panel" id="membership-panel">
+        <h2>Комисии на <span id="membership-member-name"></span></h2>
+        <div id="membership-error" class="form-error" role="alert"></div>
+        <div class="committee-chip-list" id="membership-current-list"></div>
+        <div class="membership-add-row">
+          <div>
+            <label for="membership-committee-select">Комисия</label>
+            <select id="membership-committee-select"></select>
+          </div>
+          <div>
+            <label for="membership-role-input">Роля (по избор)</label>
+            <input type="text" id="membership-role-input" placeholder="напр. Председател" />
+          </div>
+          <button type="button" id="membership-add-btn">+ Добави</button>
+        </div>
+        <div class="form-actions" style="margin-top:1rem;">
+          <button type="button" id="membership-panel-close" class="btn-secondary">Затвори</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Статус</th>
+                <th>Име</th>
+                <th>Партия</th>
+                <th>Комисии</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="council-members-tbody">
+              <tr><td colspan="5" class="empty-state">Зареждане...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== COMMITTEES ===================== -->
+    <div class="entity-panel" id="panel-committees">
+      <div class="toolbar">
+        <div class="status-tabs" data-scope="committees">
+          <button type="button" data-status="pending" class="active">Чакащи преглед</button>
+          <button type="button" data-status="approved">Одобрени</button>
+          <button type="button" data-status="rejected">Отхвърлени</button>
+          <button type="button" data-status="all">Всички</button>
+        </div>
+        <button type="button" id="new-committee-btn">+ Нова комисия</button>
+      </div>
+
+      <div class="card form-panel" id="committee-form-panel">
+        <h2 id="committee-form-title">Нова комисия</h2>
+        <div id="committee-form-error" class="form-error" role="alert"></div>
+        <form id="committee-form" class="inline-form-wide">
+          <input type="hidden" id="committee-id" />
+          <div class="form-row">
+            <div>
+              <label for="committee-name">Наименование *</label>
+              <input type="text" id="committee-name" required />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Запазване</button>
+            <button type="button" id="committee-form-cancel" class="btn-secondary">Отказ</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Статус</th>
+                <th>Наименование</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="committees-tbody">
+              <tr><td colspan="3" class="empty-state">Зареждане...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/admin/admin-common.js"></script>
+  <script src="/admin/administration.js"></script>
+  <script>
+    (async function () {
+      const user = await checkAuthOrRedirect();
+      if (!user) return;
+      renderAdminNav('administration');
+      initAdminAdministrationPage();
+    })();
+  </script>
+</body>
+</html>

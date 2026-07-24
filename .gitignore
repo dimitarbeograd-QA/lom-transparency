@@ -1,0 +1,8 @@
+node_modules/
+server/lom.db*
+server/*.test.db*
+server/uploads/*
+!server/uploads/.gitkeep
+playwright-report/
+test-results/
+.env

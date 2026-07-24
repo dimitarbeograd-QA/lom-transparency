@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Обществени поръчки — Администрация — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    /* Page-specific layout -- common.css / admin-common.js are shared and
+       intentionally left untouched. */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .status-tabs {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .status-tabs button {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+    }
+    .status-tabs button.active {
+      background: var(--color-primary);
+      color: var(--color-primary-contrast);
+      border-color: var(--color-primary);
+    }
+    table.procurement-table td,
+    table.procurement-table th {
+      vertical-align: top;
+    }
+    .row-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .row-actions button {
+      padding: 0.35rem 0.6rem;
+      font-size: 0.85rem;
+    }
+    .btn-approve {
+      background: #166534;
+    }
+    .btn-approve:hover {
+      background: #14532d;
+    }
+    .btn-reject {
+      background: #991b1b;
+    }
+    .btn-reject:hover {
+      background: #7f1d1d;
+    }
+    #procurement-form-panel {
+      display: none;
+    }
+    #procurement-form-panel.open {
+      display: block;
+    }
+    #procurement-form .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    #procurement-form {
+      max-width: none;
+    }
+    #procurement-form textarea {
+      min-height: 90px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .form-actions button {
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="admin-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Обществени поръчки</h1>
+      <p class="lead">
+        Управление на процедурите по ЗОП, обявени от Община Лом, включително
+        одобряване на записи, получени от автоматичното синхронизиране от
+        е-Портал за обществени поръчки (е-obp.eu/bp/Lom).
+      </p>
+    </div>
+
+    <div class="toolbar">
+      <div class="status-tabs" id="status-tabs">
+        <button type="button" data-status="pending" class="active">Чакащи преглед</button>
+        <button type="button" data-status="approved">Одобрени</button>
+        <button type="button" data-status="rejected">Отхвърлени</button>
+        <button type="button" data-status="all">Всички</button>
+      </div>
+      <button type="button" id="new-procurement-btn">+ Нова поръчка</button>
+    </div>
+
+    <div class="card" id="procurement-form-panel">
+      <h2 id="procurement-form-title">Нова поръчка</h2>
+      <div id="procurement-form-error" class="form-error" role="alert"></div>
+      <form id="procurement-form">
+        <input type="hidden" id="procurement-id" />
+        <div class="form-row">
+          <div>
+            <label for="procurement-title">Заглавие *</label>
+            <input type="text" id="procurement-title" required />
+          </div>
+          <div>
+            <label for="procurement-procedure-type">Вид процедура</label>
+            <input type="text" id="procurement-procedure-type" placeholder="напр. Публично състезание" />
+          </div>
+        </div>
+        <div>
+          <label for="procurement-description">Описание</label>
+          <textarea id="procurement-description"></textarea>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="procurement-status">Статус</label>
+            <select id="procurement-status">
+              <option value="обявена">обявена</option>
+              <option value="в ход">в ход</option>
+              <option value="възложена">възложена</option>
+              <option value="приключена">приключена</option>
+              <option value="прекратена">прекратена</option>
+            </select>
+          </div>
+          <div>
+            <label for="procurement-estimated-value">Прогнозна стойност (лв.)</label>
+            <input type="number" step="0.01" id="procurement-estimated-value" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="procurement-publish-date">Дата на публикуване</label>
+            <input type="date" id="procurement-publish-date" />
+          </div>
+          <div>
+            <label for="procurement-deadline-date">Краен срок</label>
+            <input type="date" id="procurement-deadline-date" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="procurement-awarded-contractor">Изпълнител</label>
+            <input type="text" id="procurement-awarded-contractor" />
+          </div>
+          <div>
+            <label for="procurement-contract-value">Стойност на договора (лв.)</label>
+            <input type="number" step="0.01" id="procurement-contract-value" />
+          </div>
+          <div>
+            <label for="procurement-contract-date">Дата на договора</label>
+            <input type="date" id="procurement-contract-date" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="procurement-project-id">Свързан проект (ID, по избор)</label>
+            <input type="number" id="procurement-project-id" placeholder="ID от модул „Бюджет“" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" id="procurement-form-submit">Запазване</button>
+          <button type="button" id="procurement-form-cancel" class="btn-secondary">Отказ</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="table-responsive">
+        <table class="procurement-table">
+          <thead>
+            <tr>
+              <th>Статус</th>
+              <th>Дата</th>
+              <th>Вид процедура</th>
+              <th>Заглавие</th>
+              <th>Стойност</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="procurement-tbody">
+            <tr><td colspan="6" class="empty-state">Зареждане...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="/admin/admin-common.js"></script>
+  <script src="/admin/procurement.js"></script>
+  <script>
+    (async function () {
+      const user = await checkAuthOrRedirect();
+      if (!user) return;
+      renderAdminNav('procurement');
+      initAdminProcurementPage();
+    })();
+  </script>
+</body>
+</html>

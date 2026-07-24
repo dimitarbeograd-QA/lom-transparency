@@ -1,0 +1,16 @@
+{
+  "name": "lom-transparency",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Портал за прозрачност на Община Лом",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report",
+    "test:server": "npm test --prefix server"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

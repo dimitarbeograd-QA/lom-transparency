@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Решения на ОбС — Администрация — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    /* Page-specific layout -- common.css / admin-common.js are shared and
+       intentionally left untouched. */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .status-tabs {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .status-tabs button {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+    }
+    .status-tabs button.active {
+      background: var(--color-primary);
+      color: var(--color-primary-contrast);
+      border-color: var(--color-primary);
+    }
+    table.decisions-table td,
+    table.decisions-table th {
+      vertical-align: top;
+    }
+    .row-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .row-actions button {
+      padding: 0.35rem 0.6rem;
+      font-size: 0.85rem;
+    }
+    .btn-approve {
+      background: #166534;
+    }
+    .btn-approve:hover {
+      background: #14532d;
+    }
+    .btn-reject {
+      background: #991b1b;
+    }
+    .btn-reject:hover {
+      background: #7f1d1d;
+    }
+    #decision-form-panel {
+      display: none;
+    }
+    #decision-form-panel.open {
+      display: block;
+    }
+    #decision-form .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    #decision-form {
+      max-width: none;
+    }
+    #decision-form textarea {
+      min-height: 90px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .form-actions button {
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="admin-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Решения на Общински съвет</h1>
+      <p class="lead">
+        Управление на решенията от заседанията на Общински съвет &ndash; Лом,
+        включително одобряване на записи, получени от автоматичното
+        синхронизиране.
+      </p>
+    </div>
+
+    <div class="toolbar">
+      <div class="status-tabs" id="status-tabs">
+        <button type="button" data-status="pending" class="active">Чакащи преглед</button>
+        <button type="button" data-status="approved">Одобрени</button>
+        <button type="button" data-status="rejected">Отхвърлени</button>
+        <button type="button" data-status="all">Всички</button>
+      </div>
+      <button type="button" id="new-decision-btn">+ Ново решение</button>
+    </div>
+
+    <div class="card" id="decision-form-panel">
+      <h2 id="decision-form-title">Ново решение</h2>
+      <div id="decision-form-error" class="form-error" role="alert"></div>
+      <form id="decision-form">
+        <input type="hidden" id="decision-id" />
+        <div class="form-row">
+          <div>
+            <label for="decision-title">Заглавие *</label>
+            <input type="text" id="decision-title" required />
+          </div>
+          <div>
+            <label for="decision-category">Категория</label>
+            <input type="text" id="decision-category" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="decision-session-date">Дата на заседание</label>
+            <input type="date" id="decision-session-date" />
+          </div>
+          <div>
+            <label for="decision-session-number">Номер на сесия</label>
+            <input type="text" id="decision-session-number" />
+          </div>
+          <div>
+            <label for="decision-number">Номер на решение</label>
+            <input type="text" id="decision-number" />
+          </div>
+        </div>
+        <div>
+          <label for="decision-summary">Резюме</label>
+          <textarea id="decision-summary"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" id="decision-form-submit">Запазване</button>
+          <button type="button" id="decision-form-cancel" class="btn-secondary">Отказ</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="table-responsive">
+        <table class="decisions-table">
+          <thead>
+            <tr>
+              <th>Статус</th>
+              <th>Дата</th>
+              <th>Сесия</th>
+              <th>Решение №</th>
+              <th>Заглавие</th>
+              <th>Категория</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="decisions-tbody">
+            <tr><td colspan="7" class="empty-state">Зареждане...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="/admin/admin-common.js"></script>
+  <script src="/admin/decisions.js"></script>
+  <script>
+    (async function () {
+      const user = await checkAuthOrRedirect();
+      if (!user) return;
+      renderAdminNav('decisions');
+      initAdminDecisionsPage();
+    })();
+  </script>
+</body>
+</html>

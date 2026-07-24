@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Решения на Общински съвет — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    /* Page-specific layout for the decisions list -- common.css is shared
+       across all modules and intentionally left untouched. */
+    .filter-form {
+      max-width: none;
+    }
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .filter-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+    .filter-actions button {
+      width: auto;
+    }
+    #decisions-list {
+      display: grid;
+      gap: 1rem;
+    }
+    a.decision-card {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+    a.decision-card:hover {
+      border-color: var(--color-primary);
+      text-decoration: none;
+    }
+    .decision-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Решения на Общински съвет</h1>
+      <p class="lead">
+        Дневен ред, материали и решения от заседанията на Общински съвет
+        &ndash; Лом.
+      </p>
+    </div>
+
+    <div class="card">
+      <form id="filter-form" class="filter-form">
+        <div class="filter-row">
+          <div>
+            <label for="filter-session-number">Номер на сесия</label>
+            <input type="text" id="filter-session-number" name="session_number" placeholder="напр. 2026-07-06" />
+          </div>
+          <div>
+            <label for="filter-category">Категория</label>
+            <input type="text" id="filter-category" name="category" placeholder="напр. Бюджет" />
+          </div>
+          <div>
+            <label for="filter-from">От дата</label>
+            <input type="date" id="filter-from" name="from" />
+          </div>
+          <div>
+            <label for="filter-to">До дата</label>
+            <input type="date" id="filter-to" name="to" />
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button type="submit">Филтриране</button>
+          <button type="button" id="filter-reset" class="btn-secondary">Изчистване</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="decisions-list">
+      <p class="empty-state">Зареждане...</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    &copy; 2026 Община Лом &mdash; Портал за прозрачност
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script src="/decisions/decisions.js"></script>
+  <script>
+    renderNav('decisions');
+    initDecisionsListPage();
+  </script>
+</body>
+</html>

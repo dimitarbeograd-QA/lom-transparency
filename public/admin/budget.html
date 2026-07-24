@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Бюджет — Администрация — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="/admin/budget-admin.css" />
+</head>
+<body>
+  <div id="admin-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Бюджет и разходи по проекти</h1>
+      <p class="lead">Управление на проекти, бюджетни редове и разходи.</p>
+    </div>
+
+    <section id="project-list-section" class="card">
+      <div class="section-heading-row">
+        <h2>Проекти</h2>
+        <button type="button" id="new-project-btn" class="btn">+ Нов проект</button>
+      </div>
+      <div class="table-responsive">
+        <table id="projects-table">
+          <thead>
+            <tr>
+              <th>Проект</th>
+              <th>Категория</th>
+              <th>Статус</th>
+              <th>Преглед</th>
+              <th>Разпределени / Изразходвани</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="projects-tbody">
+            <tr><td colspan="6" class="empty-state">Зареждане...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="project-form-section" class="card hidden">
+      <h2 id="project-form-title">Нов проект</h2>
+      <div id="project-form-error" class="form-error" role="alert"></div>
+      <form id="project-form" class="wide-form">
+        <div>
+          <label for="pf-name">Наименование *</label>
+          <input type="text" id="pf-name" name="name" required />
+        </div>
+        <div>
+          <label for="pf-category">Категория</label>
+          <input type="text" id="pf-category" name="category" />
+        </div>
+        <div>
+          <label for="pf-status">Статус</label>
+          <select id="pf-status" name="status">
+            <option value="planned">Планиран</option>
+            <option value="active">Активен</option>
+            <option value="completed">Завършен</option>
+          </select>
+        </div>
+        <div>
+          <label for="pf-description">Описание</label>
+          <textarea id="pf-description" name="description" rows="4"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn">Запази</button>
+          <button type="button" id="project-form-cancel" class="btn btn-secondary">Отказ</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="project-detail-section" class="hidden">
+      <div class="card">
+        <div class="section-heading-row">
+          <h2 id="detail-project-name">Проект</h2>
+          <div id="detail-project-actions"></div>
+        </div>
+        <div id="detail-project-meta"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-heading-row">
+          <h3>Бюджетни редове</h3>
+          <button type="button" id="new-budget-line-btn" class="btn btn-secondary">+ Бюджетен ред</button>
+        </div>
+        <div id="budget-line-form-wrap" class="hidden">
+          <form id="budget-line-form" class="inline-form">
+            <input type="hidden" name="id" />
+            <div>
+              <label for="bl-year">Година</label>
+              <input type="number" id="bl-year" name="year" />
+            </div>
+            <div>
+              <label for="bl-funding-source">Източник на финансиране</label>
+              <input type="text" id="bl-funding-source" name="funding_source" />
+            </div>
+            <div>
+              <label for="bl-amount">Разпределена сума (лв.)</label>
+              <input type="number" step="0.01" min="0" id="bl-amount" name="allocated_amount" />
+            </div>
+            <div>
+              <label for="bl-notes">Бележки</label>
+              <input type="text" id="bl-notes" name="notes" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn">Запази</button>
+              <button type="button" class="btn btn-secondary budget-line-form-cancel">Отказ</button>
+            </div>
+          </form>
+        </div>
+        <div class="table-responsive">
+          <table id="budget-lines-table">
+            <thead>
+              <tr>
+                <th>Година</th>
+                <th>Източник</th>
+                <th>Сума</th>
+                <th>Бележки</th>
+                <th>Преглед</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="budget-lines-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-heading-row">
+          <h3>Разходи</h3>
+          <button type="button" id="new-expenditure-btn" class="btn btn-secondary">+ Разход</button>
+        </div>
+        <div id="expenditure-form-wrap" class="hidden">
+          <form id="expenditure-form" class="inline-form">
+            <input type="hidden" name="id" />
+            <div>
+              <label for="exp-vendor">Доставчик *</label>
+              <input type="text" id="exp-vendor" name="vendor_name" required />
+            </div>
+            <div>
+              <label for="exp-amount">Сума (лв.)</label>
+              <input type="number" step="0.01" min="0" id="exp-amount" name="amount" />
+            </div>
+            <div>
+              <label for="exp-date">Дата</label>
+              <input type="date" id="exp-date" name="expenditure_date" />
+            </div>
+            <div>
+              <label for="exp-doc">Референтен документ</label>
+              <input type="text" id="exp-doc" name="document_reference" />
+            </div>
+            <div>
+              <label for="exp-desc">Описание</label>
+              <input type="text" id="exp-desc" name="description" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn">Запази</button>
+              <button type="button" class="btn btn-secondary expenditure-form-cancel">Отказ</button>
+            </div>
+          </form>
+        </div>
+        <div class="table-responsive">
+          <table id="expenditures-table">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Доставчик</th>
+                <th>Сума</th>
+                <th>Документ</th>
+                <th>Преглед</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="expenditures-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Прикачени документи</h3>
+        <form id="attachment-form" class="inline-form">
+          <div>
+            <label for="att-label">Етикет</label>
+            <input type="text" id="att-label" name="label" />
+          </div>
+          <div>
+            <label for="att-url">URL адрес</label>
+            <input type="url" id="att-url" name="url" placeholder="https://..." />
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-secondary">Прикачи</button>
+          </div>
+        </form>
+        <ul id="attachments-list" class="attachment-admin-list"></ul>
+      </div>
+
+      <p><button type="button" id="back-to-list-btn" class="btn btn-secondary">&larr; Обратно към списъка</button></p>
+    </section>
+  </main>
+
+  <script src="/admin/admin-common.js"></script>
+  <script src="/admin/budget.js"></script>
+</body>
+</html>

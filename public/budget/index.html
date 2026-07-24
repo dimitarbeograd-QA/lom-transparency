@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Бюджет и разходи по проекти — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="/budget/budget.css" />
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Бюджет и разходи по проекти</h1>
+      <p class="lead">
+        Разпределени и изразходвани средства по проекти на Община Лом, по
+        категория и по година.
+      </p>
+    </div>
+
+    <section class="card">
+      <h2>Общо изпълнение на бюджета</h2>
+      <div id="overall-stats" class="card-grid">
+        <p class="empty-state">Зареждане...</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>По категория</h2>
+      <div id="by-category-chart">
+        <p class="empty-state">Зареждане...</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>По година</h2>
+      <div id="by-year-chart">
+        <p class="empty-state">Зареждане...</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Проекти</h2>
+
+      <form id="filters-form" class="filters-form">
+        <div>
+          <label for="filter-year">Година</label>
+          <select id="filter-year" name="year">
+            <option value="">Всички</option>
+          </select>
+        </div>
+        <div>
+          <label for="filter-category">Категория</label>
+          <select id="filter-category" name="category">
+            <option value="">Всички</option>
+          </select>
+        </div>
+        <div>
+          <label for="filter-status">Статус</label>
+          <select id="filter-status" name="status">
+            <option value="">Всички</option>
+            <option value="planned">Планиран</option>
+            <option value="active">Активен</option>
+            <option value="completed">Завършен</option>
+          </select>
+        </div>
+        <div class="filters-actions">
+          <button type="submit" class="btn-secondary btn">Филтрирай</button>
+        </div>
+      </form>
+
+      <div class="table-responsive">
+        <table id="projects-table">
+          <thead>
+            <tr>
+              <th>Проект</th>
+              <th>Категория</th>
+              <th>Статус</th>
+              <th>Разпределени средства</th>
+              <th>Изразходвани средства</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="projects-tbody">
+            <tr><td colspan="6" class="empty-state">Зареждане...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    &copy; 2026 Община Лом &mdash; Портал за прозрачност
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script src="/budget/budget.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Вход в администрацията — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">Община Лом &mdash; Прозрачност</a>
+  </header>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Вход в администрацията</h1>
+      <p class="lead">Достъп само за служители на общината.</p>
+    </div>
+
+    <div class="card" style="max-width: 420px;">
+      <form id="login-form">
+        <div id="login-error" class="form-error" role="alert"></div>
+
+        <div>
+          <label for="username">Потребителско име</label>
+          <input type="text" id="username" name="username" autocomplete="username" required />
+        </div>
+
+        <div>
+          <label for="password">Парола</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required />
+        </div>
+
+        <button type="submit" id="login-submit">Вход</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const form = document.getElementById('login-form');
+      const errorBox = document.getElementById('login-error');
+
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        errorBox.classList.remove('visible');
+        errorBox.textContent = '';
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ username, password }),
+          });
+
+          if (!res.ok) {
+            errorBox.textContent = 'Грешно потребителско име или парола.';
+            errorBox.classList.add('visible');
+            return;
+          }
+
+          window.location.href = '/admin/dashboard.html';
+        } catch (err) {
+          errorBox.textContent = 'Възникна грешка при връзката със сървъра.';
+          errorBox.classList.add('visible');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

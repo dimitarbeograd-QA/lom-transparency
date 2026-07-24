@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Общинска администрация — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    /* Page-specific layout for the administration directory -- common.css
+       is shared across all modules and intentionally left untouched. */
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .department-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .department-card h3 {
+      margin: 0 0 0.25rem 0;
+    }
+    .department-desc {
+      color: var(--color-text-muted, #666);
+      font-size: 0.92rem;
+      margin: 0 0 0.75rem 0;
+    }
+    .official-item {
+      padding: 0.6rem 0;
+      border-top: 1px solid var(--color-border, #e5e5e5);
+    }
+    .official-item:first-child {
+      border-top: none;
+    }
+    .official-name {
+      font-weight: 600;
+    }
+    .official-position {
+      color: var(--color-text-muted, #666);
+      font-size: 0.88rem;
+    }
+    .official-contacts {
+      font-size: 0.88rem;
+      margin-top: 0.15rem;
+    }
+    .official-contacts a {
+      color: inherit;
+    }
+    .party-group {
+      margin-bottom: 1.25rem;
+    }
+    .party-group h3 {
+      font-size: 1rem;
+      margin: 0 0 0.5rem 0;
+      color: var(--color-text-muted, #666);
+    }
+    .council-member-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0.75rem;
+    }
+    .council-member-card {
+      border: 1px solid var(--color-border, #e5e5e5);
+      border-radius: 8px;
+      padding: 0.75rem 0.9rem;
+    }
+    .council-member-name {
+      font-weight: 600;
+    }
+    .committee-chip {
+      display: inline-block;
+      font-size: 0.78rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      background: var(--color-badge-approved-bg, #dcfce7);
+      color: var(--color-badge-approved-text, #166534);
+      margin: 0.2rem 0.3rem 0 0;
+    }
+    .committee-chip.chair {
+      background: var(--color-badge-pending-bg, #fef3c7);
+      color: var(--color-badge-pending-text, #92400e);
+      font-weight: 600;
+    }
+    .committee-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    .committee-card h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1rem;
+    }
+    .committee-card ul {
+      margin: 0;
+      padding-left: 1.1rem;
+    }
+    .committee-card li.chair {
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Общинска администрация</h1>
+      <p class="lead">
+        Структура на общинската администрация, контакти, състав на
+        Общинския съвет — Лом и неговите постоянни комисии.
+      </p>
+    </div>
+
+    <section id="departments-section">
+      <div class="section-heading">
+        <h2>Администрация и контакти</h2>
+      </div>
+      <div id="departments-list" class="department-grid">
+        <p class="empty-state">Зареждане...</p>
+      </div>
+    </section>
+
+    <section id="council-section" style="margin-top: 2rem;">
+      <div class="section-heading">
+        <h2>Общински съвет — Лом</h2>
+      </div>
+      <div id="council-members-list">
+        <p class="empty-state">Зареждане...</p>
+      </div>
+    </section>
+
+    <section id="committees-section" style="margin-top: 2rem;">
+      <div class="section-heading">
+        <h2>Постоянни комисии</h2>
+      </div>
+      <div id="committees-list" class="committee-grid">
+        <p class="empty-state">Зареждане...</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    &copy; 2026 Община Лом &mdash; Портал за прозрачност
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script src="/administration/administration.js"></script>
+  <script>
+    renderNav('administration');
+    initAdministrationPage();
+  </script>
+</body>
+</html>

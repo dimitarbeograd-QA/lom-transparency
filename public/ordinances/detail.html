@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Наредба — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    .attachments-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.5rem;
+    }
+    .attachments-list li {
+      padding: 0.6rem 0.85rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+    }
+  </style>
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main class="page-container" id="ordinance-detail">
+    <p class="empty-state">Зареждане...</p>
+  </main>
+
+  <footer class="site-footer">
+    &copy; 2026 Община Лом &mdash; Портал за прозрачност
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script src="/ordinances/ordinances.js"></script>
+  <script>
+    renderNav('ordinances');
+    initOrdinanceDetailPage();
+  </script>
+</body>
+</html>

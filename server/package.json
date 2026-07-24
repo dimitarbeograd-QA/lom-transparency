@@ -1,0 +1,24 @@
+{
+  "name": "lom-transparency-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Backend сървър за портала за прозрачност на Община Лом",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "sync": "node scraper/runAll.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "better-sqlite3": "^11.3.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "multer": "^1.4.5-lts.1",
+    "cheerio": "^1.0.0",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  }
+}

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Табло — Администрация — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+</head>
+<body>
+  <div id="admin-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Табло за преглед</h1>
+      <p class="lead">
+        Обобщение на съдържанието, чакащо одобрение, по модули.
+      </p>
+    </div>
+
+    <div id="pending-summary" class="card-grid">
+      <p class="empty-state">Зареждане...</p>
+    </div>
+  </main>
+
+  <script src="/admin/admin-common.js"></script>
+  <script>
+    (async function () {
+      const user = await checkAuthOrRedirect();
+      if (!user) return;
+
+      renderAdminNav('dashboard');
+
+      const container = document.getElementById('pending-summary');
+
+      // Review-registry keys don't map 1:1 to admin pages -- budget
+      // registers three keys (projects/budget_lines/expenditures) that all
+      // live on one admin page, and administration registers four keys
+      // (departments/officials/council_members/committees) that all live
+      // on one admin page too. Map each explicitly rather than assuming
+      // `/admin/${key}.html` exists.
+      const ADMIN_PAGE_BY_KEY = {
+        'budget-projects': 'budget.html',
+        'budget-lines': 'budget.html',
+        'budget-expenditures': 'budget.html',
+        decisions: 'decisions.html',
+        ordinances: 'ordinances.html',
+        procurement: 'procurement.html',
+        departments: 'administration.html',
+        officials: 'administration.html',
+        council_members: 'administration.html',
+        committees: 'administration.html',
+      };
+      const LABEL_BY_KEY = {
+        'budget-projects': 'Бюджет — проекти',
+        'budget-lines': 'Бюджет — бюджетни пера',
+        'budget-expenditures': 'Бюджет — разходи',
+        decisions: 'Решения на Общински съвет',
+        ordinances: 'Наредби',
+        procurement: 'Обществени поръчки',
+        departments: 'Администрация — отдели',
+        officials: 'Администрация — служители',
+        council_members: 'Администрация — общински съветници',
+        committees: 'Администрация — комисии',
+      };
+
+      try {
+        const data = await fetchJson('/api/review/pending');
+        const modules = (data && data.modules) || [];
+
+        if (modules.length === 0) {
+          container.innerHTML =
+            '<p class="empty-state">Все още няма регистрирани модули за преглед.</p>';
+          return;
+        }
+
+        container.innerHTML = modules
+          .map(function (mod) {
+            const count = (mod.items || []).length;
+            const page = ADMIN_PAGE_BY_KEY[mod.key] || (mod.key + '.html');
+            const label = LABEL_BY_KEY[mod.key] || mod.key;
+            return `
+              <div class="stat-card">
+                <div class="stat-number">${count}</div>
+                <div class="stat-label">${label} &mdash; чакащи преглед</div>
+                <p style="margin-top: 0.75rem;">
+                  <a class="btn btn-secondary" href="/admin/${page}">Преглед</a>
+                </p>
+              </div>
+            `;
+          })
+          .join('');
+      } catch (err) {
+        container.innerHTML =
+          '<p class="empty-state">Грешка при зареждане на чакащите за преглед елементи.</p>';
+      }
+    })();
+  </script>
+</body>
+</html>

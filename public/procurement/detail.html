@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Обществена поръчка — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    .attachments-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 0.5rem;
+    }
+    .attachments-list li {
+      padding: 0.6rem 0.85rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+    }
+    .detail-facts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem 1.5rem;
+      margin: 1em 0;
+    }
+    .detail-facts dt {
+      font-size: 0.8rem;
+      color: var(--color-text-muted, #666);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .detail-facts dd {
+      margin: 0.15em 0 0;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main class="page-container" id="procurement-detail">
+    <p class="empty-state">Зареждане...</p>
+  </main>
+
+  <footer class="site-footer">
+    &copy; 2026 Община Лом &mdash; Портал за прозрачност
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script src="/procurement/procurement.js"></script>
+  <script>
+    renderNav('procurement');
+    initProcurementDetailPage();
+  </script>
+</body>
+</html>

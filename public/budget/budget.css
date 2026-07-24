@@ -1,0 +1,140 @@
+/* Community Лом -- Бюджет module: bar "charts" made of plain styled divs
+   (no charting library per project convention). */
+
+.bar-group {
+  margin-bottom: 1.1rem;
+}
+
+.bar-group:last-child {
+  margin-bottom: 0;
+}
+
+.bar-group-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+  gap: 1rem;
+}
+
+.bar-group-label .bar-group-name {
+  font-weight: 600;
+}
+
+.bar-group-label .bar-group-values {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.bar-track {
+  position: relative;
+  background: #eef1ec;
+  border-radius: var(--radius);
+  height: 1.4rem;
+  overflow: hidden;
+}
+
+.bar-fill-allocated {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: #cfe3d8;
+  border-radius: var(--radius);
+}
+
+.bar-fill-spent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: var(--color-primary);
+  border-radius: var(--radius);
+}
+
+.bar-legend {
+  display: flex;
+  gap: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1rem;
+}
+
+.bar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.bar-legend .swatch {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 3px;
+}
+
+.swatch-allocated {
+  background: #cfe3d8;
+}
+
+.swatch-spent {
+  background: var(--color-primary);
+}
+
+.filters-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  max-width: none;
+  margin-bottom: 1.25rem;
+}
+
+.filters-form > div {
+  min-width: 160px;
+}
+
+.filters-actions {
+  min-width: auto;
+}
+
+.amount-cell {
+  white-space: nowrap;
+}
+
+.progress-note {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 0.2rem;
+}
+
+dl.detail-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1rem;
+  margin: 0;
+}
+
+dl.detail-list dt {
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+dl.detail-list dd {
+  margin: 0;
+}
+
+.attachment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.attachment-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.attachment-list li:last-child {
+  border-bottom: none;
+}

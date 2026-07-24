@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Община Лом — Портал за прозрачност</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    .module-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .module-links a.card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .module-links a.card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    .module-links a.card h3 {
+      margin-bottom: 0.35rem;
+      color: var(--color-link);
+    }
+
+    .module-links a.card p {
+      margin: 0;
+      color: var(--color-text-muted);
+      font-size: 0.9rem;
+    }
+
+    .stat-card.stat-error .stat-number {
+      font-size: 1.05rem;
+      color: var(--color-text-muted);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Портал за прозрачност на Община Лом</h1>
+      <p class="lead">
+        Отворени данни за бюджета, разходите, обществените поръчки, решенията
+        на Общинския съвет, наредбите и администрацията на Община Лом —
+        на едно място, събрани от официалните източници на общината и
+        публикувани само след проверка от служител.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>За портала</h2>
+      <p>
+        Тази страница дава на гражданите на Лом лесен достъп до информация,
+        която общината вече е длъжна да оповестява, но която е трудно
+        намираема, разпръсната или тежка за преглед на официалния сайт.
+        Съдържанието идва от два източника: ръчно въведени данни през
+        административния панел на общината и автоматизирано извличане на
+        публикувана информация от <a href="https://lom.bg" target="_blank" rel="noopener noreferrer">lom.bg</a>.
+        И в двата случая записите се показват тук едва след като
+        служител на общината ги прегледа и одобри.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Порталът в момента</h2>
+      <div id="highlights" class="card-grid">
+        <p class="empty-state">Зареждане на обобщени данни...</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Разгледайте по раздели</h2>
+      <div class="module-links">
+        <a class="card" href="/budget/">
+          <h3>Бюджет и разходи</h3>
+          <p>Общински проекти, разпределени средства и реални разходи по доставчици.</p>
+        </a>
+        <a class="card" href="/procurement/">
+          <h3>Обществени поръчки</h3>
+          <p>Обявени, текущи и приключени процедури по обществени поръчки.</p>
+        </a>
+        <a class="card" href="/decisions/">
+          <h3>Решения на ОбС</h3>
+          <p>Решения, приети от Общинския съвет на Лом по сесии.</p>
+        </a>
+        <a class="card" href="/ordinances/">
+          <h3>Наредби</h3>
+          <p>Действащи и отменени наредби на общината.</p>
+        </a>
+        <a class="card" href="/administration/">
+          <h3>Администрация</h3>
+          <p>Структура на общинската администрация, съветници и комисии.</p>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    &copy; 2026 Община Лом &mdash; Портал за прозрачност
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script>
+    renderNav('home');
+
+    // Each highlight tile fetches from a different module's public API and
+    // fails independently -- one module being briefly unavailable (e.g. a
+    // deploy in progress, a transient DB error) must never take down the
+    // other tiles or the rest of the landing page.
+
+    function renderStat(number, label) {
+      return (
+        '<div class="stat-card">' +
+        '<div class="stat-number">' + number + '</div>' +
+        '<div class="stat-label">' + label + '</div>' +
+        '</div>'
+      );
+    }
+
+    function renderStatError(label) {
+      return (
+        '<div class="stat-card stat-error">' +
+        '<div class="stat-number">&mdash;</div>' +
+        '<div class="stat-label">' + label + ' (временно недостъпно)</div>' +
+        '</div>'
+      );
+    }
+
+    async function loadBudgetHighlight() {
+      try {
+        const [dashboard, projects] = await Promise.all([
+          fetchJson('/api/dashboard/budget'),
+          fetchJson('/api/projects'),
+        ]);
+
+        const currentYear = new Date().getFullYear();
+        const yearBucket = ((dashboard && dashboard.by_year) || []).find(
+          (y) => y.year === currentYear
+        );
+        const spentThisYear = yearBucket ? yearBucket.spent_total : 0;
+        const projectCount = ((projects && projects.projects) || []).length;
+
+        return (
+          renderStat(projectCount, 'одобрени проекта в бюджета') +
+          renderStat(formatBGN(spentThisYear), 'изразходвани през ' + currentYear + ' г.')
+        );
+      } catch (err) {
+        return renderStatError('Бюджет и разходи');
+      }
+    }
+
+    async function loadProcurementHighlight() {
+      try {
+        const data = await fetchJson('/api/procurements');
+        const procurements = (data && data.procurements) || [];
+        const openStatuses = ['обявена', 'в ход'];
+        const openCount = procurements.filter((p) => openStatuses.includes(p.status)).length;
+        return renderStat(openCount, 'отворени обществени поръчки');
+      } catch (err) {
+        return renderStatError('Обществени поръчки');
+      }
+    }
+
+    async function loadDecisionsHighlight() {
+      try {
+        const currentYear = new Date().getFullYear();
+        const data = await fetchJson('/api/council-decisions?from=' + currentYear + '-01-01');
+        const decisions = (data && data.decisions) || [];
+        return renderStat(decisions.length, 'решения на ОбС през ' + currentYear + ' г.');
+      } catch (err) {
+        return renderStatError('Решения на ОбС');
+      }
+    }
+
+    async function loadOrdinancesHighlight() {
+      try {
+        const data = await fetchJson('/api/ordinances?status=active');
+        const ordinances = (data && data.ordinances) || [];
+        return renderStat(ordinances.length, 'действащи наредби');
+      } catch (err) {
+        return renderStatError('Наредби');
+      }
+    }
+
+    async function loadHighlights() {
+      const container = document.getElementById('highlights');
+
+      // Kick every module's fetch off in parallel, but resolve independently
+      // -- Promise.allSettled would also work here, but each loader already
+      // swallows its own error and returns markup either way, so a plain
+      // Promise.all over them is safe and keeps ordering simple.
+      const sections = await Promise.all([
+        loadBudgetHighlight(),
+        loadProcurementHighlight(),
+        loadDecisionsHighlight(),
+        loadOrdinancesHighlight(),
+      ]);
+
+      container.innerHTML = sections.join('');
+    }
+
+    loadHighlights();
+  </script>
+</body>
+</html>
