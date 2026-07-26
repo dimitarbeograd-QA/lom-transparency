@@ -63,36 +63,75 @@
         committees: 'Администрация — комисии',
       };
 
-      try {
-        const data = await fetchJson('/api/review/pending');
-        const modules = (data && data.modules) || [];
+      async function loadSummary() {
+        try {
+          const data = await fetchJson('/api/review/pending');
+          const modules = (data && data.modules) || [];
 
-        if (modules.length === 0) {
+          if (modules.length === 0) {
+            container.innerHTML =
+              '<p class="empty-state">Все още няма регистрирани модули за преглед.</p>';
+            return;
+          }
+
+          container.innerHTML = modules
+            .map(function (mod) {
+              const count = (mod.items || []).length;
+              const page = ADMIN_PAGE_BY_KEY[mod.key] || (mod.key + '.html');
+              const label = LABEL_BY_KEY[mod.key] || mod.key;
+              const bulkButtons =
+                count > 0
+                  ? `<button type="button" class="btn btn-approve" data-approve-all="${mod.table}">Одобри всички (${count})</button> ` +
+                    `<button type="button" class="btn btn-reject" data-reject-all="${mod.table}">Отхвърли всички</button>`
+                  : '';
+              return `
+                <div class="stat-card">
+                  <div class="stat-number">${count}</div>
+                  <div class="stat-label">${label} &mdash; чакащи преглед</div>
+                  <p style="margin-top: 0.75rem;">
+                    <a class="btn btn-secondary" href="/admin/${page}">Преглед</a>
+                  </p>
+                  <p style="margin-top: 0.5rem;">${bulkButtons}</p>
+                </div>
+              `;
+            })
+            .join('');
+
+          container.querySelectorAll('[data-approve-all]').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+              const table = btn.getAttribute('data-approve-all');
+              if (!window.confirm('Одобряване на всички чакащи записи в този раздел?')) return;
+              btn.disabled = true;
+              try {
+                await fetchJson('/api/review/' + table + '/approve-all', { method: 'POST' });
+                await loadSummary();
+              } catch (err) {
+                window.alert('Грешка при масово одобряване.');
+                btn.disabled = false;
+              }
+            });
+          });
+          container.querySelectorAll('[data-reject-all]').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+              const table = btn.getAttribute('data-reject-all');
+              if (!window.confirm('Отхвърляне на всички чакащи записи в този раздел?')) return;
+              btn.disabled = true;
+              try {
+                await fetchJson('/api/review/' + table + '/reject-all', { method: 'POST' });
+                await loadSummary();
+              } catch (err) {
+                window.alert('Грешка при масово отхвърляне.');
+                btn.disabled = false;
+              }
+            });
+          });
+        } catch (err) {
           container.innerHTML =
-            '<p class="empty-state">Все още няма регистрирани модули за преглед.</p>';
-          return;
+            '<p class="empty-state">Грешка при зареждане на чакащите за преглед елементи.</p>';
         }
-
-        container.innerHTML = modules
-          .map(function (mod) {
-            const count = (mod.items || []).length;
-            const page = ADMIN_PAGE_BY_KEY[mod.key] || (mod.key + '.html');
-            const label = LABEL_BY_KEY[mod.key] || mod.key;
-            return `
-              <div class="stat-card">
-                <div class="stat-number">${count}</div>
-                <div class="stat-label">${label} &mdash; чакащи преглед</div>
-                <p style="margin-top: 0.75rem;">
-                  <a class="btn btn-secondary" href="/admin/${page}">Преглед</a>
-                </p>
-              </div>
-            `;
-          })
-          .join('');
-      } catch (err) {
-        container.innerHTML =
-          '<p class="empty-state">Грешка при зареждане на чакащите за преглед елементи.</p>';
       }
+
+      await loadSummary();
     })();
   </script>
 </body>

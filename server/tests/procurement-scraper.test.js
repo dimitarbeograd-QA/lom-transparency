@@ -8,6 +8,7 @@ const assert = require('node:assert/strict');
 const {
   parseListingPage,
   parseBgDateToIso,
+  parseContractInfo,
   TYPE_FILTERS,
 } = require('../scraper/modules/procurement');
 
@@ -87,6 +88,34 @@ test('parseListingPage returns an empty array for a listing page with no entries
   );
 
   assert.deepEqual(entries, []);
+});
+
+test('parseContractInfo extracts the real contract number/date from the "Договори за изпълнение" block on a real detail-page fixture', () => {
+  const detailHtml = readFixture('procurement-detail-with-contract.html');
+  const info = parseContractInfo(detailHtml);
+  assert.deepEqual(info, { contractNumber: '195', contractDate: '2020-08-13' });
+});
+
+test('parseContractInfo falls back to the document-block\'s own <h4> date when the "Коментар:" text has no number/date (real "Договор за ОП N" per-lot format)', () => {
+  const detailHtml = readFixture('procurement-detail-contract-no-number.html');
+  const info = parseContractInfo(detailHtml);
+  // The fixture has 4 such blocks (one per lot); the parser takes the first.
+  assert.deepEqual(info, { contractNumber: null, contractDate: '2020-07-14' });
+});
+
+test('parseContractInfo returns null when the page has no signed-contract block (no throw)', () => {
+  assert.equal(parseContractInfo('<html><body>no document blocks here</body></html>'), null);
+  assert.equal(
+    parseContractInfo('<div class="document-block"><h4>Обявление № 1 / 1.1.2020 г.</h4></div>'),
+    null
+  );
+});
+
+test('parseContractInfo ignores a "проект на договор" block (draft template, not a signed contract)', () => {
+  const html =
+    '<div class="document-block"><h4>Проект на договор № 1 / 1.1.2020 г.</h4>' +
+    '<span>Коментар: </span><span class="text-info">Договор №999 от 01.01.2020 г.</span></div>';
+  assert.equal(parseContractInfo(html), null);
 });
 
 test('TYPE_FILTERS declares all 5 site filters with non-empty param and label', () => {

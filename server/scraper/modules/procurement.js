@@ -73,6 +73,118 @@ const { db } = require('../../db');
 
 const BASE_URL = 'https://e-obp.eu/bp/Lom';
 
+// ---------------------------------------------------------------------------
+// Contract-signing lookup (added after the initial build, per a direct
+// request to surface real contract numbers/dates, not just tender titles).
+//
+// Confirmed by hand (fetched a real detail page) that each procedure's
+// document list is a set of `.document-block` divs, each with an <h4> like
+// "Договори за изпълнение № 13 / 14.8.2020 г." and, when present, a
+// "Коментар: Договор №195 от 13.08.2020 г." line -- that comment text is
+// the actual contract number + signing date. Extracting THAT (free text on
+// an HTML page we already fetch) is reliable; going further to identify the
+// contractor's name would mean downloading and parsing the linked contract
+// file itself, which on this site is a *mix* of PDF and legacy .doc files
+// behind an authToken'd download URL -- .doc parsing isn't something this
+// app has a dependency for, and it wasn't judged worth adding one rather
+// riskily just for this. Contractor name stays an admin-fill-in field, same
+// as the other fields this module's initial build already left for review.
+// ---------------------------------------------------------------------------
+
+const CONTRACT_BLOCK_LABEL_RE = /договор/i;
+const CONTRACT_COMMENT_RE = /№\s*([^\s,]+)\s*от\s*(\d{1,2})\.(\d{1,2})\.(\d{4})\s*г\.?/u;
+const MAX_CONTRACT_LOOKUPS_PER_RUN = 30;
+
+/**
+ * Parse one procedure detail page for a "Договори за изпълнение"-style
+ * document block and pull a signing date (and, when available, a contract
+ * number) out of it. Pure function of the HTML string -- safe to unit test
+ * against a saved fixture without any network access.
+ *
+ * Two real comment formats were found by hand on live pages:
+ *   - "Договор №195 от 13.08.2020 г." -- has both a number and a date; used
+ *     when present (the more informative case).
+ *   - "Договор за ОП 1" (a per-lot contract on a multi-lot tender) -- no
+ *     number or date in the comment at all. Every document-block's own
+ *     <h4> always carries a publish date regardless of comment format
+ *     ("Договори за изпълнение № 16 / 14.7.2020 г."), so that's the
+ *     fallback -- reuses parseBgDateToIso, the same trailing-date parser
+ *     already used for listing-page entries.
+ */
+function parseContractInfo(html) {
+  const $ = parseHtml(html);
+  let result = null;
+
+  $('.document-block').each((_, el) => {
+    if (result) return;
+    const h4 = $(el).find('h4').first().text();
+    if (!CONTRACT_BLOCK_LABEL_RE.test(h4) || /проект/i.test(h4)) return;
+
+    const blockText = $(el).text();
+    const m = CONTRACT_COMMENT_RE.exec(blockText);
+    if (m) {
+      const [, number, dd, mm, yyyy] = m;
+      result = {
+        contractNumber: number,
+        contractDate: `${yyyy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`,
+      };
+      return;
+    }
+
+    const h4Date = parseBgDateToIso(h4);
+    if (h4Date) {
+      result = { contractNumber: null, contractDate: h4Date };
+    }
+  });
+
+  return result;
+}
+
+async function lookupAndApplyContractInfo() {
+  const candidates = db
+    .prepare(
+      `SELECT id, source_url FROM procurements
+       WHERE contract_date IS NULL AND source_url IS NOT NULL
+       ORDER BY id
+       LIMIT ?`
+    )
+    .all(MAX_CONTRACT_LOOKUPS_PER_RUN);
+
+  let updated = 0;
+
+  for (const row of candidates) {
+    let html;
+    try {
+      const res = await politeFetch(row.source_url);
+      html = await res.text();
+    } catch (err) {
+      console.warn(`[procurement] failed to fetch detail page ${row.source_url}:`, err.message);
+      continue;
+    }
+
+    const info = parseContractInfo(html);
+    if (!info) continue;
+
+    const contractNote = info.contractNumber
+      ? `Договор № ${info.contractNumber}`
+      : 'Договор за изпълнение (номер не е посочен в източника)';
+
+    db.prepare(
+      `UPDATE procurements
+       SET contract_date = ?,
+           status = CASE WHEN status = 'обявена' THEN 'възложена' ELSE status END,
+           description = CASE
+             WHEN description IS NULL OR description = '' THEN ?
+             ELSE description
+           END
+       WHERE id = ?`
+    ).run(info.contractDate, contractNote, row.id);
+    updated += 1;
+  }
+
+  return updated;
+}
+
 const TYPE_FILTERS = [
   { param: 'Preparing', label: 'Предварителни обявления' },
   { param: 'Tender', label: 'Обществени поръчки' },
@@ -183,10 +295,16 @@ async function scrapeProcurement() {
     }
   }
 
+  const contractsUpdated = await lookupAndApplyContractInfo();
+  if (contractsUpdated) {
+    console.log(`[procurement] filled in contract number/date for ${contractsUpdated} procedure(s)`);
+  }
+
   return { upserted };
 }
 
 module.exports = scrapeProcurement;
 module.exports.parseListingPage = parseListingPage;
 module.exports.parseBgDateToIso = parseBgDateToIso;
+module.exports.parseContractInfo = parseContractInfo;
 module.exports.TYPE_FILTERS = TYPE_FILTERS;

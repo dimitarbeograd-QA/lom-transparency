@@ -65,4 +65,34 @@ function setReviewStatus(status) {
 router.post('/review/:table/:id/approve', setReviewStatus('approved'));
 router.post('/review/:table/:id/reject', setReviewStatus('rejected'));
 
+// Bulk approve/reject -- added after the initial build: a scraper run can
+// easily leave hundreds of pending rows in one table (e.g. a full
+// procurement-history backfill), and clicking "Одобри" one row at a time on
+// that scale isn't realistic admin UX. Same security boundary as the
+// single-row routes (table must be a registered reviewable); acts only on
+// rows currently 'pending' so it's safe to call repeatedly.
+function setReviewStatusBulk(status) {
+  return (req, res) => {
+    const { table } = req.params;
+
+    const reviewable = findReviewableByTable(table);
+    if (!reviewable) {
+      return res.status(403).json({ error: 'unknown_reviewable_table' });
+    }
+
+    const info = db
+      .prepare(
+        `UPDATE ${table}
+         SET review_status = ?, reviewed_by = ?, reviewed_at = datetime('now')
+         WHERE review_status = 'pending'`
+      )
+      .run(status, req.user.id);
+
+    return res.json({ updated: info.changes });
+  };
+}
+
+router.post('/review/:table/approve-all', setReviewStatusBulk('approved'));
+router.post('/review/:table/reject-all', setReviewStatusBulk('rejected'));
+
 module.exports = router;

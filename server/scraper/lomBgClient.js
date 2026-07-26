@@ -17,6 +17,14 @@ function delay(ms) {
  * Fetch a URL politely: realistic User-Agent, ~15s timeout, throws a clear
  * error on non-2xx responses, and waits a short delay before returning so we
  * don't hammer the target site with back-to-back requests.
+ *
+ * Also always sends a same-origin `Referer` header. Found by hand: lom.bg's
+ * file-download endpoint (`inc/service/service-download-file.php`) silently
+ * returns a small HTML error page instead of the real file when there's no
+ * Referer -- no error status, just wrong content, which had been making
+ * every PDF-based extraction in this app (decisions, budget) fail 100% of
+ * the time without ever throwing. A plain `<origin>/` referer is enough,
+ * confirmed by hand; no need to reference the exact linking page.
  */
 async function politeFetch(url) {
   const controller = new AbortController();
@@ -25,7 +33,10 @@ async function politeFetch(url) {
   let response;
   try {
     response = await fetch(url, {
-      headers: { 'User-Agent': USER_AGENT },
+      headers: {
+        'User-Agent': USER_AGENT,
+        Referer: `${new URL(url).origin}/`,
+      },
       signal: controller.signal,
     });
   } catch (err) {
