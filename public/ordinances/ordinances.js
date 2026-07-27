@@ -67,41 +67,113 @@
     return `<span class="badge ${cls}">${escapeHtml(STATUS_LABELS[status] || status)}</span>`;
   }
 
-  function renderOrdinanceCard(ordinance) {
-    const dateText = ordinance.adoption_date
-      ? `Дата на приемане: ${escapeHtml(formatDate(ordinance.adoption_date))}`
-      : escapeHtml(adoptionDateLabel(ordinance));
+  const ORDINANCES_TABLE_COLS = 4;
+
+  function renderOrdinanceRow(ordinance) {
+    const dateText = ordinance.adoption_date ? escapeHtml(formatDate(ordinance.adoption_date)) : 'неизвестна';
+    const title = escapeHtml(ordinance.title) || '(без заглавие)';
 
     return `
-      <a class="card ordinance-card" href="/ordinances/detail.html?id=${escapeAttr(ordinance.id)}">
-        <div class="ordinance-card-header">
-          ${statusBadge(ordinance.status)}
-          <span class="text-muted">${dateText}</span>
-        </div>
-        <h3 style="margin: 0.35em 0;">${escapeHtml(ordinance.title) || '(без заглавие)'}</h3>
-        ${ordinance.category ? `<span class="badge badge-approved">${escapeHtml(ordinance.category)}</span>` : ''}
-      </a>
+      <tr>
+        <td>${statusBadge(ordinance.status)}</td>
+        <td><a href="/ordinances/detail.html?id=${escapeAttr(ordinance.id)}">${title}</a></td>
+        <td>${ordinance.category ? escapeHtml(ordinance.category) : '—'}</td>
+        <td>${dateText}</td>
+      </tr>
+    `;
+  }
+
+  function renderOrdinancesBreakdown(ordinances) {
+    const breakdown = document.getElementById('ordinances-breakdown');
+    if (!breakdown) return;
+
+    if (!ordinances.length) {
+      breakdown.innerHTML = '';
+      return;
+    }
+
+    const total = ordinances.length;
+    const activeCount = ordinances.filter((o) => o.status === 'active').length;
+    const repealedCount = ordinances.filter((o) => o.status === 'repealed').length;
+
+    breakdown.innerHTML = `
+      <div class="breakdown-bar">
+        <div class="breakdown-pill accent"><strong>${total}</strong> резултата</div>
+        <div class="breakdown-pill"><strong>${activeCount}</strong> действащи</div>
+        <div class="breakdown-pill"><strong>${repealedCount}</strong> отменени</div>
+      </div>
     `;
   }
 
   async function loadOrdinancesList(filters) {
     const container = document.getElementById('ordinances-list');
+    const breakdown = document.getElementById('ordinances-breakdown');
+    if (breakdown) breakdown.innerHTML = '';
     container.innerHTML = '<p class="empty-state">Зареждане...</p>';
 
     try {
       const data = await fetchJson(`/api/ordinances${qs(filters)}`);
       const ordinances = (data && data.ordinances) || [];
 
+      renderOrdinancesBreakdown(ordinances);
+
       if (ordinances.length === 0) {
-        container.innerHTML =
-          '<p class="empty-state">Няма намерени наредби по зададените критерии.</p>';
+        container.innerHTML = `
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Статус</th>
+                  <th>Заглавие</th>
+                  <th>Категория</th>
+                  <th>Дата на приемане</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="${ORDINANCES_TABLE_COLS}" class="empty-state">Няма намерени наредби по зададените критерии.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        `;
         return;
       }
 
-      container.innerHTML = ordinances.map(renderOrdinanceCard).join('');
+      container.innerHTML = `
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Статус</th>
+                <th>Заглавие</th>
+                <th>Категория</th>
+                <th>Дата на приемане</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ordinances.map(renderOrdinanceRow).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
     } catch (err) {
-      container.innerHTML =
-        '<p class="empty-state">Грешка при зареждане на наредбите. Опитайте отново по-късно.</p>';
+      if (breakdown) breakdown.innerHTML = '';
+      container.innerHTML = `
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Статус</th>
+                <th>Заглавие</th>
+                <th>Категория</th>
+                <th>Дата на приемане</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="${ORDINANCES_TABLE_COLS}" class="empty-state">Грешка при зареждане на наредбите. Опитайте отново по-късно.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
     }
   }
 

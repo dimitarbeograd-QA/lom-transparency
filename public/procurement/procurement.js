@@ -64,23 +64,68 @@
     };
   }
 
-  function renderProcurementCard(procurement) {
+  function renderProcurementRow(procurement) {
+    const title = escapeHtml(procurement.title) || '(без заглавие)';
     return `
-      <a class="card procurement-card" href="/procurement/detail.html?id=${escapeAttr(procurement.id)}">
-        <div class="procurement-card-header">
-          ${statusBadge(procurement.status)}
-          ${procurement.publish_date ? `<span class="text-muted">${escapeHtml(formatDate(procurement.publish_date))}</span>` : ''}
-          ${procurement.procedure_type ? `<span class="text-muted">${escapeHtml(procurement.procedure_type)}</span>` : ''}
-        </div>
-        <h3 style="margin: 0.35em 0;">${escapeHtml(procurement.title) || '(без заглавие)'}</h3>
-        ${procurement.estimated_value ? `<p class="text-muted" style="margin:0;">Прогнозна стойност: ${escapeHtml(formatBGN(procurement.estimated_value))}</p>` : ''}
-      </a>
+      <tr>
+        <td>${statusBadge(procurement.status)}</td>
+        <td><a href="/procurement/detail.html?id=${escapeAttr(procurement.id)}">${title}</a></td>
+        <td>${procurement.procedure_type ? escapeHtml(procurement.procedure_type) : '&mdash;'}</td>
+        <td>${procurement.publish_date ? escapeHtml(formatDate(procurement.publish_date)) : '&mdash;'}</td>
+        <td>${procurement.awarded_contractor ? escapeHtml(procurement.awarded_contractor) : '&mdash;'}</td>
+        <td class="num">${procurement.contract_value ? escapeHtml(formatBGN(procurement.contract_value)) : '&mdash;'}</td>
+      </tr>
     `;
+  }
+
+  function renderProcurementsTable(procurements) {
+    return `
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Статус</th>
+              <th>Заглавие</th>
+              <th>Вид процедура</th>
+              <th>Дата на публикуване</th>
+              <th>Изпълнител</th>
+              <th class="num">Стойност на договора</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${procurements.map(renderProcurementRow).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderProcurementsBreakdown(procurements) {
+    const total = procurements.length;
+    const awardedCount = procurements.filter((p) => p.status === 'възложена').length;
+    const withValue = procurements.filter(
+      (p) => p.contract_value !== null && p.contract_value !== undefined
+    );
+    const totalValue = withValue.reduce((sum, p) => sum + Number(p.contract_value || 0), 0);
+
+    const pills = [`<div class="breakdown-pill accent"><strong>${total}</strong> резултата</div>`];
+    pills.push(`<div class="breakdown-pill"><strong>${awardedCount}</strong> възложени</div>`);
+    if (withValue.length > 0) {
+      const label =
+        withValue.length === total
+          ? 'обща стойност на договорите'
+          : `обща стойност на договорите (за ${withValue.length} от ${total})`;
+      pills.push(`<div class="breakdown-pill"><strong>${escapeHtml(formatBGN(totalValue))}</strong> ${label}</div>`);
+    }
+
+    return `<div class="breakdown-bar">${pills.join('')}</div>`;
   }
 
   async function loadProcurementsList(filters) {
     const container = document.getElementById('procurements-list');
+    const breakdownContainer = document.getElementById('procurement-breakdown');
     container.innerHTML = '<p class="empty-state">Зареждане...</p>';
+    if (breakdownContainer) breakdownContainer.innerHTML = '';
 
     try {
       const data = await fetchJson(`/api/procurements${qs(filters)}`);
@@ -92,7 +137,10 @@
         return;
       }
 
-      container.innerHTML = procurements.map(renderProcurementCard).join('');
+      if (breakdownContainer) {
+        breakdownContainer.innerHTML = renderProcurementsBreakdown(procurements);
+      }
+      container.innerHTML = renderProcurementsTable(procurements);
     } catch (err) {
       container.innerHTML =
         '<p class="empty-state">Грешка при зареждане на поръчките. Опитайте отново по-късно.</p>';

@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(require('./auth'));
 router.use(require('./attachments'));
 router.use(require('./review'));
+router.use(require('./search'));
 
 // ---------------------------------------------------------------------------
 // Auto-mount every route module dropped into server/routes/modules/*.js

@@ -84,10 +84,111 @@
 
     container.innerHTML = `
       <header class="site-header">
-        <a class="brand" href="/">Община Лом &mdash; Прозрачност</a>
-        <nav class="site-nav">${links}</nav>
+        <div class="site-header-inner">
+          <a class="brand" href="/">Община Лом &mdash; Прозрачност</a>
+          <nav class="site-nav">${links}</nav>
+          <div class="site-search" id="site-search-root">
+            <input type="search" id="site-search-input" placeholder="Търсене в бюджет, поръчки, решения, наредби..." autocomplete="off" />
+            <div class="site-search-results" id="site-search-results"></div>
+          </div>
+        </div>
       </header>
     `;
+
+    initGlobalSearch();
+  }
+
+  function escapeSearchHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderSearchResults(data) {
+    const panel = document.getElementById('site-search-results');
+    if (!panel) return;
+
+    if (!data.groups || data.groups.length === 0) {
+      panel.innerHTML = `<div class="site-search-empty">Няма резултати за &bdquo;${escapeSearchHtml(data.query)}&ldquo;.</div>`;
+      return;
+    }
+
+    panel.innerHTML = data.groups
+      .map((group) => {
+        const items = group.items
+          .map(
+            (item) => `
+              <a class="site-search-item" href="${escapeSearchHtml(item.href)}">
+                <span class="item-title">${escapeSearchHtml(item.title || '(без заглавие)')}</span>
+                ${item.meta ? `<span class="item-meta">${escapeSearchHtml(item.meta)}</span>` : ''}
+              </a>
+            `
+          )
+          .join('');
+        return `
+          <div class="site-search-group">
+            <div class="site-search-group-label">${escapeSearchHtml(group.label)}</div>
+            ${items}
+          </div>
+        `;
+      })
+      .join('');
+  }
+
+  function initGlobalSearch() {
+    const input = document.getElementById('site-search-input');
+    const panel = document.getElementById('site-search-results');
+    const root = document.getElementById('site-search-root');
+    if (!input || !panel || !root) return;
+
+    let debounceTimer = null;
+    let latestQuery = '';
+
+    async function runSearch(q) {
+      latestQuery = q;
+      if (q.trim().length < 2) {
+        panel.classList.remove('open');
+        panel.innerHTML = '';
+        return;
+      }
+      panel.innerHTML = '<div class="site-search-loading">Търсене...</div>';
+      panel.classList.add('open');
+      try {
+        const data = await fetchJson(`/api/search?q=${encodeURIComponent(q)}`);
+        if (latestQuery !== q) return; // a newer keystroke has already superseded this response
+        renderSearchResults(data);
+      } catch (err) {
+        panel.innerHTML = '<div class="site-search-empty">Грешка при търсене.</div>';
+      }
+    }
+
+    input.addEventListener('input', function () {
+      clearTimeout(debounceTimer);
+      const value = input.value;
+      debounceTimer = setTimeout(function () {
+        runSearch(value);
+      }, 250);
+    });
+
+    input.addEventListener('focus', function () {
+      if (input.value.trim().length >= 2) panel.classList.add('open');
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!root.contains(event.target)) {
+        panel.classList.remove('open');
+      }
+    });
+
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        panel.classList.remove('open');
+        input.blur();
+      }
+    });
   }
 
   window.fetchJson = fetchJson;

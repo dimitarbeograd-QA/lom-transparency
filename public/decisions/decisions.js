@@ -58,40 +58,120 @@
       : 'Номер на решението предстои да бъде уточнен';
   }
 
-  function renderDecisionCard(decision) {
+  const DECISIONS_TABLE_COLUMNS = 5;
+
+  function renderDecisionRow(decision) {
     const number = decisionNumberLabel(decision);
+    const title = escapeHtml(decision.title) || '(без заглавие)';
 
     return `
-      <a class="card decision-card" href="/decisions/detail.html?id=${escapeAttr(decision.id)}">
-        <div class="decision-card-header">
-          <strong>${number}</strong>
-          ${decision.session_date ? `<span class="text-muted">${escapeHtml(formatDate(decision.session_date))}</span>` : ''}
-        </div>
-        <h3 style="margin: 0.35em 0;">${escapeHtml(decision.title) || '(без заглавие)'}</h3>
-        ${decision.category ? `<span class="badge badge-approved">${escapeHtml(decision.category)}</span>` : ''}
-        ${decision.summary ? `<p class="text-muted" style="margin-top:0.5em;">${escapeHtml(decision.summary)}</p>` : ''}
-      </a>
+      <tr>
+        <td>${number}</td>
+        <td>
+          <a href="/decisions/detail.html?id=${escapeAttr(decision.id)}">${title}</a>
+        </td>
+        <td>${decision.session_number ? escapeHtml(decision.session_number) : '&mdash;'}</td>
+        <td>${decision.session_date ? escapeHtml(formatDate(decision.session_date)) : '&mdash;'}</td>
+        <td>${decision.category ? `<span class="badge badge-approved">${escapeHtml(decision.category)}</span>` : '&mdash;'}</td>
+      </tr>
     `;
+  }
+
+  function renderDecisionsTable(decisions) {
+    const rows = decisions.map(renderDecisionRow).join('');
+    return `
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Номер на решение</th>
+              <th>Заглавие</th>
+              <th>Протокол/сесия</th>
+              <th>Дата на сесията</th>
+              <th>Категория</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderDecisionsEmptyState(message) {
+    return `
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Номер на решение</th>
+              <th>Заглавие</th>
+              <th>Протокол/сесия</th>
+              <th>Дата на сесията</th>
+              <th>Категория</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="${DECISIONS_TABLE_COLUMNS}" class="empty-state">${message}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderDecisionsBreakdown(decisions) {
+    const total = decisions.length;
+    const distinctSessions = new Set(
+      decisions
+        .map((d) => d.session_number)
+        .filter((v) => v !== null && v !== undefined && v !== '')
+    ).size;
+
+    const mostRecentDate = decisions
+      .map((d) => d.session_date)
+      .filter(Boolean)
+      .sort()
+      .pop();
+
+    const pills = [`<div class="breakdown-pill accent"><strong>${total}</strong> резултата</div>`];
+
+    pills.push(`<div class="breakdown-pill"><strong>${distinctSessions}</strong> сесии</div>`);
+
+    if (mostRecentDate) {
+      pills.push(
+        `<div class="breakdown-pill"><strong>${escapeHtml(formatDate(mostRecentDate))}</strong> последна сесия</div>`
+      );
+    }
+
+    return `<div class="breakdown-bar">${pills.join('')}</div>`;
   }
 
   async function loadDecisionsList(filters) {
     const container = document.getElementById('decisions-list');
+    const breakdownContainer = document.getElementById('decisions-breakdown');
     container.innerHTML = '<p class="empty-state">Зареждане...</p>';
+    if (breakdownContainer) breakdownContainer.innerHTML = '';
 
     try {
       const data = await fetchJson(`/api/council-decisions${qs(filters)}`);
       const decisions = (data && data.decisions) || [];
 
       if (decisions.length === 0) {
-        container.innerHTML =
-          '<p class="empty-state">Няма намерени решения по зададените критерии.</p>';
+        container.innerHTML = renderDecisionsEmptyState(
+          'Няма намерени решения по зададените критерии.'
+        );
         return;
       }
 
-      container.innerHTML = decisions.map(renderDecisionCard).join('');
+      if (breakdownContainer) {
+        breakdownContainer.innerHTML = renderDecisionsBreakdown(decisions);
+      }
+      container.innerHTML = renderDecisionsTable(decisions);
     } catch (err) {
-      container.innerHTML =
-        '<p class="empty-state">Грешка при зареждане на решенията. Опитайте отново по-късно.</p>';
+      container.innerHTML = renderDecisionsEmptyState(
+        'Грешка при зареждане на решенията. Опитайте отново по-късно.'
+      );
     }
   }
 

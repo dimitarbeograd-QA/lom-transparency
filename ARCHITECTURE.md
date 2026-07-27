@@ -83,7 +83,8 @@ module.exports = { defineSchema };
 
 Аналогично, `server/routes/index.js`:
 
-1. Монтира базовите маршрути (`/auth/*`, `/attachments/*`, `/review/*`).
+1. Монтира базовите маршрути (`/auth/*`, `/attachments/*`, `/review/*`,
+   `/search`).
 2. Чете всички `.js` файлове в `server/routes/modules/`, сортирани по
    азбучен ред.
 3. За всеки файл прави `router.use(require(...))` — файлът трябва да
@@ -315,6 +316,20 @@ Cloudflare разпознава автоматизация), и то само в
   поръчки, свързани с проекта, с връзка към
   `/procurement/detail.html?id=<id>`.
 - `GET /api/procurements` поддържа и `?project_id=` филтър за същата цел.
+
+## Глобално търсене
+
+`GET /api/search?q=` (`server/routes/search.js`) е базов маршрут, не модул
+— по природа трябва да познава таблиците на всички модули, така че живее
+редом до `review.js`, а не в `routes/modules/`. Прави прост `LIKE` scan по
+заглавната колона на всяка таблица (`projects.name`, `procurements.title`,
+`council_decisions.title`, `ordinances.title`, `officials.name`,
+`council_members.name`, `departments.name`), само `review_status =
+'approved'` редове, групирани по модул в отговора. Няма FTS5 индекс —
+обемът на данните (стотици редове на таблица) не оправдава такава
+сложност. Вградено в хедъра на всяка публична страница
+(`public/js/common.js` → `renderNav`/`initGlobalSearch`) като поле с
+debounce 250мс и падащ панел с резултати по групи.
 
 ## Прикачени файлове
 
