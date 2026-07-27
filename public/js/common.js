@@ -70,6 +70,7 @@
     { key: 'decisions', label: 'Решения на ОбС', href: '/decisions/' },
     { key: 'ordinances', label: 'Наредби', href: '/ordinances/' },
     { key: 'administration', label: 'Администрация', href: '/administration/' },
+    { key: 'minfin', label: 'Финансови показатели (МФ)', href: '/minfin/' },
   ];
 
   function renderNav(activeKey) {

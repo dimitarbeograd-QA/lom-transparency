@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Финансови показатели (МФ) — Администрация — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    /* Page-specific layout -- common.css / admin-common.js are shared and
+       intentionally left untouched. */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .status-tabs {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .status-tabs button {
+      background: var(--color-surface);
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+    }
+    .status-tabs button.active {
+      background: var(--color-primary);
+      color: var(--color-primary-contrast);
+      border-color: var(--color-primary);
+    }
+    table.minfin-table td,
+    table.minfin-table th {
+      text-align: right;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    table.minfin-table td:first-child,
+    table.minfin-table th:first-child,
+    table.minfin-table td:nth-child(2),
+    table.minfin-table th:nth-child(2) {
+      text-align: left;
+    }
+    .row-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .row-actions button {
+      padding: 0.35rem 0.6rem;
+      font-size: 0.85rem;
+    }
+    .btn-approve {
+      background: #166534;
+    }
+    .btn-approve:hover {
+      background: #14532d;
+    }
+    .btn-reject {
+      background: #991b1b;
+    }
+    .btn-reject:hover {
+      background: #7f1d1d;
+    }
+  </style>
+</head>
+<body>
+  <div id="admin-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Финансови показатели на общините (Министерство на финансите)</h1>
+      <p class="lead">
+        Чисто автоматично извлечени тримесечни показатели за Община Лом от
+        minfin.bg — числата идват директно от официален xlsx файл, затова
+        тук няма форма за ръчно въвеждане, само преглед и одобрение.
+      </p>
+    </div>
+
+    <div class="toolbar">
+      <div class="status-tabs" id="status-tabs">
+        <button type="button" data-status="pending" class="active">Чакащи преглед</button>
+        <button type="button" data-status="approved">Одобрени</button>
+        <button type="button" data-status="rejected">Отхвърлени</button>
+        <button type="button" data-status="all">Всички</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-responsive">
+        <table class="minfin-table">
+          <thead>
+            <tr>
+              <th>Статус на преглед</th>
+              <th>Период</th>
+              <th>Собствени приходи</th>
+              <th>Разходи</th>
+              <th>Бюджетно салдо</th>
+              <th>Налични средства</th>
+              <th>Общински дълг</th>
+              <th>Просрочени задължения</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="minfin-tbody">
+            <tr><td colspan="9" class="empty-state">Зареждане...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="/admin/admin-common.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      const STATUS_BADGE = {
+        pending: 'badge-pending',
+        approved: 'badge-approved',
+        rejected: 'badge-rejected',
+      };
+      const STATUS_LABEL = {
+        pending: 'Чака преглед',
+        approved: 'Одобрено',
+        rejected: 'Отхвърлено',
+      };
+
+      let currentStatus = 'pending';
+
+      async function loadRows() {
+        const tbody = document.getElementById('minfin-tbody');
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Зареждане...</td></tr>';
+
+        try {
+          const query = currentStatus === 'all' ? '' : '?status=' + currentStatus;
+          const data = await fetchJson('/api/admin/minfin' + query);
+          renderRows(data.indicators);
+        } catch (err) {
+          tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Грешка при зареждане.</td></tr>';
+        }
+      }
+
+      function renderRows(rows) {
+        const tbody = document.getElementById('minfin-tbody');
+
+        if (!rows || rows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Няма записи.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = rows
+          .map(function (r) {
+            const badgeClass = STATUS_BADGE[r.review_status] || 'badge-pending';
+            const badgeLabel = STATUS_LABEL[r.review_status] || r.review_status;
+            const actions =
+              r.review_status === 'pending'
+                ? `<button type="button" class="btn-approve" data-approve="${r.id}">Одобри</button>` +
+                  `<button type="button" class="btn-reject" data-reject="${r.id}">Отхвърли</button>`
+                : '';
+            return (
+              '<tr>' +
+              `<td><span class="badge ${badgeClass}">${badgeLabel}</span></td>` +
+              '<td>' + r.period_label + '</td>' +
+              '<td>' + formatBGN(r.own_revenue) + '</td>' +
+              '<td>' + formatBGN(r.expenditure) + '</td>' +
+              '<td>' + formatBGN(r.budget_balance) + '</td>' +
+              '<td>' + formatBGN(r.available_cash) + '</td>' +
+              '<td>' + formatBGN(r.municipal_debt) + '</td>' +
+              '<td>' + formatBGN(r.arrears) + '</td>' +
+              '<td><div class="row-actions">' + actions + '</div></td>' +
+              '</tr>'
+            );
+          })
+          .join('');
+
+        tbody.querySelectorAll('[data-approve]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            reviewRow(btn.getAttribute('data-approve'), 'approve');
+          });
+        });
+        tbody.querySelectorAll('[data-reject]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            reviewRow(btn.getAttribute('data-reject'), 'reject');
+          });
+        });
+      }
+
+      async function reviewRow(id, action) {
+        try {
+          await fetchJson('/api/review/minfin_indicators/' + id + '/' + action, { method: 'POST' });
+          await loadRows();
+        } catch (err) {
+          window.alert('Грешка при преглед на записа.');
+        }
+      }
+
+      document.querySelectorAll('#status-tabs button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('#status-tabs button').forEach(function (b) {
+            b.classList.remove('active');
+          });
+          btn.classList.add('active');
+          currentStatus = btn.getAttribute('data-status');
+          loadRows();
+        });
+      });
+
+      (async function () {
+        const user = await checkAuthOrRedirect();
+        if (!user) return;
+        renderAdminNav('minfin');
+        await loadRows();
+      })();
+    })();
+  </script>
+</body>
+</html>

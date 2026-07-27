@@ -87,6 +87,7 @@
     { key: 'decisions', label: 'Решения', href: '/admin/decisions.html' },
     { key: 'ordinances', label: 'Наредби', href: '/admin/ordinances.html' },
     { key: 'administration', label: 'Администрация', href: '/admin/administration.html' },
+    { key: 'minfin', label: 'Финанси (МФ)', href: '/admin/minfin.html' },
   ];
 
   function renderAdminNav(activeKey) {

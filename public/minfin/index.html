@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Финансови показатели (Министерство на финансите) — Община Лом</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <style>
+    /* Page-specific layout -- common.css is shared and intentionally left
+       untouched. */
+    table.minfin-table td,
+    table.minfin-table th {
+      text-align: right;
+      white-space: nowrap;
+    }
+    table.minfin-table td:first-child,
+    table.minfin-table th:first-child {
+      text-align: left;
+    }
+    td.balance-negative {
+      color: var(--color-badge-rejected-text, #991b1b);
+    }
+  </style>
+</head>
+<body>
+  <div id="site-nav"></div>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1>Финансови показатели на общините — Община Лом</h1>
+      <p class="lead">
+        Тримесечни финансови показатели за Община Лом, извлечени директно
+        от официалните xlsx отчети на Министерството на финансите (по чл.
+        130г, ал. 2 от Закона за публичните финанси) — по-структурирани и
+        по-чести от еднократната годишна обща сума, публикувана на lom.bg.
+      </p>
+    </div>
+
+    <div class="card">
+      <p style="margin: 0;">
+        Източник:
+        <a href="https://www.minfin.bg/bg/810" target="_blank" rel="noopener noreferrer">
+          Финансови показатели на общините — Министерство на финансите
+        </a>
+        &middot; обновява се тримесечно, когато Министерството публикува нов файл.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="table-responsive">
+        <table class="minfin-table">
+          <thead>
+            <tr>
+              <th>Период</th>
+              <th>Собствени приходи</th>
+              <th>Разходи</th>
+              <th>Бюджетно салдо</th>
+              <th>Налични средства</th>
+              <th>Общински дълг</th>
+              <th>Просрочени задължения</th>
+            </tr>
+          </thead>
+          <tbody id="minfin-tbody">
+            <tr><td colspan="7" class="empty-state">Зареждане...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    &copy; 2026 Община Лом &mdash; Портал за прозрачност
+  </footer>
+
+  <script src="/js/common.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      function renderRows(indicators) {
+        const tbody = document.getElementById('minfin-tbody');
+
+        if (!indicators || indicators.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Няма одобрени данни все още.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = indicators
+          .map(function (r) {
+            const balanceClass = Number(r.budget_balance) < 0 ? ' class="balance-negative"' : '';
+            return (
+              '<tr>' +
+              '<td>' + r.period_label + '</td>' +
+              '<td>' + formatBGN(r.own_revenue) + '</td>' +
+              '<td>' + formatBGN(r.expenditure) + '</td>' +
+              '<td' + balanceClass + '>' + formatBGN(r.budget_balance) + '</td>' +
+              '<td>' + formatBGN(r.available_cash) + '</td>' +
+              '<td>' + formatBGN(r.municipal_debt) + '</td>' +
+              '<td>' + formatBGN(r.arrears) + '</td>' +
+              '</tr>'
+            );
+          })
+          .join('');
+      }
+
+      async function load() {
+        try {
+          const data = await fetchJson('/api/minfin');
+          renderRows(data.indicators);
+        } catch (err) {
+          document.getElementById('minfin-tbody').innerHTML =
+            '<tr><td colspan="7" class="empty-state">Грешка при зареждане на данните.</td></tr>';
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        renderNav('minfin');
+        load();
+      });
+    })();
+  </script>
+</body>
+</html>

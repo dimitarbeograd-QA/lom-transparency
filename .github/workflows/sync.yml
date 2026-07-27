@@ -19,4 +19,9 @@ jobs:
         run: npm ci --prefix server
 
       - name: Run scrape
+        # Note: the `minfin` module cannot succeed here -- it needs a headed
+        # (non-headless) browser to get past minfin.bg's Cloudflare check,
+        # which isn't available on this headless runner even with Chromium
+        # installed. It fails gracefully (logs a warning, upserts 0) rather
+        # than failing this job -- see server/scraper/modules/minfin.js.
         run: npm run sync --prefix server
